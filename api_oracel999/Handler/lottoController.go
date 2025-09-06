@@ -140,3 +140,60 @@ func InsertLotto(c *gin.Context, db *gorm.DB) {
 		"inserted": inserted,
 	})
 }
+
+func LottoLucky(c *gin.Context, db *gorm.DB) {
+	// 1. กำหนดจำนวนที่ต้องการสุ่ม
+	// การใช้ค่าคงที่ช่วยให้จัดการโค้ดได้ง่ายขึ้น
+	const luckyLottoCount = 10
+
+	var items []models.Lotto
+
+	// 2. สร้าง Query ที่มีประสิทธิภาพ
+	// เราจะให้ Database ทำงานหนักแทนเรา
+	if err := db.Model(&models.Lotto{}).
+		Where("status = ?", "sell").     // 2.1 กรองเอาเฉพาะสลากที่ยัง "ขาย" อยู่
+		Order("RAND()").                 // 2.2 สั่งให้เรียงลำดับแบบสุ่ม (สำคัญมาก!)
+		Limit(luckyLottoCount).          // 2.3 จำกัดจำนวนผลลัพธ์แค่ 5 รายการ
+		Find(&items).Error; err != nil { // 2.4 ดึงข้อมูลที่ผ่านเงื่อนไขทั้งหมด
+
+		// จัดการ Error กรณีที่การ query ล้มเหลว
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+
+	// 3. ส่งข้อมูลที่สุ่มและกรองแล้วกลับไป
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"total":  len(items), // จำนวนที่ได้มาจริง (อาจน้อยกว่า 5 ถ้ามีไม่ถึง)
+		"data":   items,
+	})
+}
+
+
+func LottoAuspicious(c *gin.Context, db *gorm.DB) {
+	// 1. กำหนดจำนวนที่ต้องการสุ่ม
+	// การใช้ค่าคงที่ช่วยให้จัดการโค้ดได้ง่ายขึ้น
+	const luckyLottoCount = 3
+
+	var items []models.Lotto
+
+	// 2. สร้าง Query ที่มีประสิทธิภาพ
+	// เราจะให้ Database ทำงานหนักแทนเรา
+	if err := db.Model(&models.Lotto{}).
+		Where("status = ?", "sell").     // 2.1 กรองเอาเฉพาะสลากที่ยัง "ขาย" อยู่
+		Order("RAND()").                 // 2.2 สั่งให้เรียงลำดับแบบสุ่ม (สำคัญมาก!)
+		Limit(luckyLottoCount).          // 2.3 จำกัดจำนวนผลลัพธ์แค่ 5 รายการ
+		Find(&items).Error; err != nil { // 2.4 ดึงข้อมูลที่ผ่านเงื่อนไขทั้งหมด
+
+		// จัดการ Error กรณีที่การ query ล้มเหลว
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+
+	// 3. ส่งข้อมูลที่สุ่มและกรองแล้วกลับไป
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"total":  len(items), // จำนวนที่ได้มาจริง (อาจน้อยกว่า 5 ถ้ามีไม่ถึง)
+		"data":   items,
+	})
+}
