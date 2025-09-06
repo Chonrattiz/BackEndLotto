@@ -28,6 +28,14 @@ func SetupRouter(r *gin.Engine, db *gorm.DB) {
 		handlers.GetLottoSell(c, db)
 	})
 
+	r.GET("/lotto/lucky", func(c *gin.Context) {
+		handlers.LottoLucky(c, db)
+	})
+
+	r.GET("/lotto/Auspicious", func(c *gin.Context) {
+		handlers.LottoAuspicious(c, db)
+	})
+
 	r.POST("/lotto/generate", func(c *gin.Context) {
 		handlers.InsertLotto(c, db)
 	})
@@ -46,6 +54,14 @@ func SetupRouter(r *gin.Engine, db *gorm.DB) {
 
 	r.GET("/wallet", func(c *gin.Context) {
 		handlers.Wallet(c, db)
+	})
+
+	r.GET("/rewards/random", func(c *gin.Context) {
+		handlers.GenerateRandomRewards(c)
+	})
+
+	r.POST("/rewards/release", func(c *gin.Context) {
+		handlers.ReleaseNewReward(c, db)
 	})
 
 }
