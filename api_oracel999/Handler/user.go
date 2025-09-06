@@ -3,6 +3,7 @@ package handlers
 import (
 	"my-go-project/models"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -82,6 +83,53 @@ func LoginHandler(c *gin.Context, db *gorm.DB) {
 			"email":    user.Email,
 			"role":     user.Role,
 			"wallet":   user.Wallet,
+		},
+	})
+}
+
+func Profile(c *gin.Context, db *gorm.DB) {
+	userIDStr := c.Query("user_id") // ดึง user_id จาก query string
+	userID, err := strconv.ParseUint(userIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+		return
+	}
+
+	var user models.User
+	if err := db.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "profile found",
+		"user": gin.H{
+			"username": user.Username,
+			"email":    user.Email,
+		},
+	})
+}
+
+func Wallet(c *gin.Context, db *gorm.DB) {
+	userIDStr := c.Query("user_id") // ดึง user_id จาก query string
+	userID, err := strconv.ParseUint(userIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+		return
+	}
+
+	var user models.User
+	if err := db.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "wallet found",
+		"user": gin.H{
+			"wallet": user.Wallet,
 		},
 	})
 }
