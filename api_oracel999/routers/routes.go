@@ -32,4 +32,20 @@ func SetupRouter(r *gin.Engine, db *gorm.DB) {
 		handlers.InsertLotto(c, db)
 	})
 
+	r.POST("/purchases/quote", func(c *gin.Context) { handlers.QuotePurchase(c, db) }) // คำนวณยอดในตะกร้า
+
+	r.POST("/purchases", func(c *gin.Context) { handlers.CreatePurchase(c, db) }) // ซื้อจริง
+
+	r.GET("/users/purchases", func(c *gin.Context) {
+		handlers.ListPurchasedLottosByUser(c, db)
+	})
+
+	r.GET("/profile", func(c *gin.Context) {
+		handlers.Profile(c, db)
+	})
+
+	r.GET("/wallet", func(c *gin.Context) {
+		handlers.Wallet(c, db)
+	})
+
 }
