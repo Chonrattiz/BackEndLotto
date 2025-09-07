@@ -56,20 +56,13 @@ func SetupRouter(r *gin.Engine, db *gorm.DB) {
 		handlers.Wallet(c, db)
 	})
 
-	r.GET("/rewards/random", func(c *gin.Context) {
-		handlers.GenerateRandomRewards(c)
+	r.GET("/lotto/search", func(c *gin.Context) {
+		handlers.SearchLottoByNumber(c, db)
 	})
 
-	r.POST("/rewards/release", func(c *gin.Context) {
-		handlers.ReleaseNewReward(c, db)
-	})
-
-	r.GET("/lotto/search", func(c *gin.Context) { 
-		handlers.SearchLotto(c, db) })
-
+	// --- 2. แก้ไข: เปลี่ยนชื่อ Handler ให้ถูกต้อง ---
 	r.GET("/lotto/random", func(c *gin.Context) {
-		 handlers.RandomLotto(c, db) })
+		handlers.RandomLotto(c, db)
+	})
 
 }
-
-
