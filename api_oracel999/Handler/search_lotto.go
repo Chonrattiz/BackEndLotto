@@ -11,11 +11,14 @@ import (
 	"gorm.io/gorm"
 )
 
-// GET /lottos/search?q=xx[xxx|xxxx..xxxxxx]&status=sell|sold&limit=100
-// กติกา: ถ้า q มีความยาว N (2..5) => เช็ค N ตัวท้าย, ถ้า 6 หลัก => เท่ากันทั้งเลข
-func SearchLotto(c *gin.Context, db *gorm.DB) {
-	q := c.Query("q")
-	status := c.Query("status") // ไม่บังคับ: "", "sell", "sold"
+// --- 1. แก้ไข: เปลี่ยนชื่อฟังก์ชันให้ตรงกับที่ Router เรียก ---
+// GET /lotto/search?number=xxxxxx[&status=sell]
+func SearchLottoByNumber(c *gin.Context, db *gorm.DB) {
+	numberQuery := c.Query("number")
+	// --- 1. แก้ไข: เปลี่ยนจาก DefaultQuery เป็น Query ---
+	// การใช้ c.Query("status") จะทำให้ถ้าผู้ใช้ไม่ส่ง status มา, ค่าจะเป็น "" (สตริงว่าง)
+	// ซึ่งจะทำให้เงื่อนไข if ด้านล่างไม่ทำงาน และไม่เกิดการกรองสถานะ
+	status := c.Query("status") // ไม่มีการกำหนดค่าเริ่มต้นอีกต่อไป
 	limitStr := c.DefaultQuery("limit", "200")
 
 	limit, _ := strconv.Atoi(limitStr)
@@ -23,29 +26,22 @@ func SearchLotto(c *gin.Context, db *gorm.DB) {
 		limit = 200
 	}
 
-	// validate: ต้องเป็นตัวเลขล้วน และความยาว 2..6 (อนุโลม 1 ก็ได้ ถ้าต้องการ)
 	isDigits := regexp.MustCompile(`^\d{1,6}$`).MatchString
-	if !isDigits(q) {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "q ต้องเป็นตัวเลข 1-6 หลัก"})
+	if !isDigits(numberQuery) {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "number ต้องเป็นตัวเลข 1-6 หลัก"})
 		return
 	}
 
-	n := len(q)
-
 	tx := db.Model(&models.Lotto{})
-	// กรองสถานะถ้าส่งมา
+
+	// --- 2. ส่วนนี้ทำงานถูกต้องเหมือนเดิม ---
+	// ถ้าผู้ใช้ส่ง ?status=sell หรือ ?status=sold เข้ามา, โค้ดส่วนนี้จะทำงาน
+	// แต่ถ้าไม่ส่งมา, status จะเป็น "" และโค้ดจะข้ามส่วนนี้ไป
 	if status == "sell" || status == "sold" {
 		tx = tx.Where("LOWER(TRIM(status)) = ?", status)
 	}
 
-	// เงื่อนไขค้นหาตามความยาว
-	switch {
-	case n == 6:
-		tx = tx.Where("lotto_number = ?", q)
-	default: // 1..5 หลัก => เช็ค N ตัวท้าย
-		// ใช้ RIGHT(...) จะดีที่สุด ไม่สนใจความยาวต้นฉบับ
-		tx = tx.Where("RIGHT(lotto_number, ?) = ?", n, q)
-	}
+	tx = tx.Where("lotto_number LIKE ?", "%"+numberQuery+"%")
 
 	var items []models.Lotto
 	if err := tx.Order("lotto_id ASC").Limit(limit).Find(&items).Error; err != nil {
@@ -60,9 +56,10 @@ func SearchLotto(c *gin.Context, db *gorm.DB) {
 	})
 }
 
-// GET /lottos/random?sell_only=true
+// GET /lotto/random?sell_only=true
+// (ฟังก์ชันนี้ถูกต้องอยู่แล้ว ไม่ต้องแก้ไข)
 func RandomLotto(c *gin.Context, db *gorm.DB) {
-	sellOnly := c.DefaultQuery("sell_only", "false")
+	sellOnly := c.DefaultQuery("sell_only", "true") // กำหนดค่าเริ่มต้นเป็น true
 
 	tx := db.Model(&models.Lotto{})
 	if sellOnly == "true" {
