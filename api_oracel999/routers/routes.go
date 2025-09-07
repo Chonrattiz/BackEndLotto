@@ -64,4 +64,8 @@ func SetupRouter(r *gin.Engine, db *gorm.DB) {
 		handlers.ReleaseNewReward(c, db)
 	})
 
+	r.GET("/lotto/search", func(c *gin.Context) { 
+		handlers.SearchLotto(c, db) })
+
 }
+
