@@ -67,5 +67,9 @@ func SetupRouter(r *gin.Engine, db *gorm.DB) {
 	r.GET("/lotto/search", func(c *gin.Context) { 
 		handlers.SearchLotto(c, db) })
 
+	r.GET("/lotto/random", func(c *gin.Context) {
+		 handlers.RandomLotto(c, db) })
+
 }
+
 
